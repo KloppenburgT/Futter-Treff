@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemeinsame Mittagsbestellung</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .no-print { display: block; }
+        .pdf-export .no-print { display: none !important; }
+
+        .form-input {
+            @apply w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-l-4 focus:border-l-blue-500 transition-all focus:bg-blue-50;
+        }
+        .form-label {
+            @apply block text-sm font-medium text-gray-700 mb-1;
+        }
+        .form-input.border-red-500 {
+            @apply ring-1 ring-red-500 border-red-500 focus:border-l-red-500;
+        }
+        .error-message {
+            @apply text-red-600 text-xs mt-1 flex items-center gap-1;
+        }
+        #success-toast {
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+        }
+        .pickup-btn-group button.active {
+            @apply bg-blue-600 text-white ring-2 ring-blue-300;
+        }
+        .pickup-btn-group button {
+            @apply px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 w-full;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 sm:p-6 lg:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Gemeinsame Mittagsbestellung</h1>
+            <p class="text-md text-gray-600 mt-2 max-w-2xl mx-auto">Tragt eure Wünsche für das heutige Mittagessen hier ein. <br class="hidden sm:block">(Bestellschluss: siehe unten – pünktlich sein lohnt sich! 🍕)</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div class="lg:col-span-2 space-y-6 no-print">
+                <div id="form-container" class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-semibold mb-6 border-b pb-3 flex items-center"><i class="fas fa-edit mr-3 text-blue-500"></i>Bestellung eintragen</h2>
+                    <form id="order-form" class="space-y-8" novalidate>
+                        
+                        <!-- Block: Person -->
+                        <div class="space-y-4">
+                             <div>
+                                <label for="name" class="form-label">Dein Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="name" name="name" class="form-input" required>
+                                <p class="error-message hidden"><i class="fas fa-exclamation-triangle fa-xs"></i>Bitte gib deinen Namen ein.</p>
+                            </div>
+                        </div>
+
+                        <!-- Block: Essensdetails -->
+                        <div class="space-y-4 border-t pt-6">
+                             <h3 class="text-lg font-semibold text-gray-800">Essensdetails</h3>
+                             <div>
+                                <label for="restaurant" class="form-label">Von welchem Laden möchtest du bestellen?</label>
+                                <select id="restaurant" name="restaurant" class="form-input">
+                                    <option>Bella Riva</option>
+                                    <option>Il Primo</option>
+                                    <option>Lennigers</option>
+                                    <option>Matzes Grill</option>
+                                    <option>Aziz</option>
+                                    <option>Asia Fusion</option>
+                                    <option>Essbar</option>
+                                    <option>Metzgerei Schäfermeier</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                                <label for="order" class="form-label sm:w-48 sm:text-left mb-2 sm:mb-0">Was möchtest du bestellen? <span class="text-red-500">*</span></label>
+                                <div class="flex-grow">
+                                    <textarea id="order" name="order" rows="3" class="form-input" placeholder="Pizza Salami, Döner mit allem, etc." required></textarea>
+                                    <p class="error-message hidden"><i class="fas fa-exclamation-triangle fa-xs"></i>Bitte gib deine Bestellung ein.</p>
+                                </div>
+                            </div>
+                             <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                                 <label for="comment" class="form-label sm:w-48 sm:text-left mb-2 sm:mb-0">Optionaler Kommentar</label>
+                                 <div class="flex-grow">
+                                    <textarea id="comment" name="comment" rows="2" class="form-input" placeholder="Ohne Zwiebeln, extra scharf, etc."></textarea>
+                                 </div>
+                            </div>
+                        </div>
+                        
+                         <!-- Block: Zeitplanung -->
+                        <div class="space-y-4 border-t pt-6">
+                            <h3 class="text-lg font-semibold text-gray-800">Zeitplanung</h3>
+                             <div>
+                                <label for="delivery-time" class="form-label">Essen soll da sein bis</label>
+                                <input type="time" id="delivery-time" name="delivery-time" class="form-input">
+                            </div>
+                            <div>
+                                <label for="order-deadline" class="form-label">Bestell-Deadline</label>
+                                <input type="time" id="order-deadline" name="order-deadline" class="form-input">
+                            </div>
+                             <p id="time-error" class="error-message hidden"><i class="fas fa-exclamation-triangle fa-xs"></i>Die Deadline darf nicht nach der Lieferzeit liegen.</p>
+                        </div>
+                        
+                         <!-- Block: Logistik -->
+                        <div class="space-y-4 border-t pt-6">
+                             <h3 class="text-lg font-semibold text-gray-800">Logistik</h3>
+                             <div>
+                                <label for="room" class="form-label">In welchem Raum isst du?</label>
+                                <select id="room" name="room" class="form-input">
+                                    <option>Lehrerzimmer</option>
+                                    <option>Teamraum 5</option>
+                                    <option>Teamraum 6</option>
+                                    <option>Teamraum 7</option>
+                                    <option>Teamraum 8</option>
+                                    <option>Teamraum 9</option>
+                                    <option>Teamraum 10</option>
+                                    <option>Teamraum OS</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label class="form-label">Kannst du das Essen abholen?</label>
+                                <div class="pickup-btn-group grid grid-cols-2 gap-2">
+                                    <button type="button" data-value="nein" class="active">Nein</button>
+                                    <button type="button" data-value="ja">Ja</button>
+                                </div>
+                                <input type="hidden" id="pickup" name="pickup" value="nein">
+                            </div>
+                            <div id="payment-section" class="hidden space-y-4 bg-blue-50 p-4 rounded-lg">
+                                 <div>
+                                    <label for="payment-method" class="form-label">Zahlungswunsch (falls du abholst)</label>
+                                    <select id="payment-method" name="payment-method" class="form-input">
+                                        <option value="bar">Ich möchte das Geld bar</option>
+                                        <option value="paypal">Ich möchte das Geld per PayPal</option>
+                                    </select>
+                                </div>
+                                <div id="paypal-section" class="hidden">
+                                    <label for="paypal-address" class="form-label">Deine PayPal-Adresse</label>
+                                    <input type="text" id="paypal-address" name="paypal-address" class="form-input" placeholder="z.B. max@mustermann.de">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all duration-300 transform hover:scale-105 mt-6">
+                            <i class="fas fa-paper-plane mr-2"></i>Jetzt Bestellung eintragen
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="overview-container" class="lg:col-span-3">
+                 <div id="printable-area" class="bg-white p-6 rounded-xl shadow-md">
+                     <div class="flex flex-wrap justify-between items-center border-b pb-3 mb-5">
+                        <div>
+                           <h2 class="text-2xl font-semibold flex items-center"><i class="fas fa-list-ul mr-3 text-green-500"></i>Bestellübersicht</h2>
+                           <p id="current-date" class="text-sm text-gray-500 mt-1"></p>
+                        </div>
+                        <div class="flex items-center space-x-3 no-print mt-3 sm:mt-0">
+                            <button id="reset-button" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600">
+                               <i class="fas fa-trash-alt mr-2"></i>Leeren
+                            </button>
+                        </div>
+                    </div>
+                     
+                    <div class="text-center text-gray-600 mb-4" id="deadline-display-container">
+                        <p>Bestellungen sind möglich bis: <strong id="deadline-display" class="text-red-600 font-bold">Bitte festlegen</strong></p>
+                    </div>
+
+                    <div id="manager-summary" class="mb-6"></div>
+
+                    <div id="order-list-container" class="space-y-4">
+                        <div id="empty-list-placeholder" class="text-center py-10 px-4">
+                            <i class="fas fa-utensils fa-3x text-gray-300"></i>
+                            <p class="mt-4 text-gray-500 font-semibold">Noch hat der Magen nichts zu tun...</p>
+                            <p class="text-sm text-gray-400">Wer macht die erste Bestellung?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal und Toast -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <h3 class="text-lg font-bold">Bestätigung</h3>
+            <p class="mt-2 text-sm text-gray-600">Möchtest du wirklich alle Bestellungen, Manager und die Deadline für heute zurücksetzen?</p>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="confirm-cancel" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Abbrechen</button>
+                <button id="confirm-ok" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Zurücksetzen</button>
+            </div>
+        </div>
+    </div>
+    <div id="success-toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-3 px-5 rounded-lg shadow-lg transform translate-x-[150%] opacity-0">
+        <i class="fas fa-check-circle mr-2"></i>Bestellung erfolgreich hinzugefügt!
+    </div>
+    
+    <script>
+        function initializeApp() {
+            let appState = {
+                date: '',
+                orders: [],
+                deadline: '',
+                managersByRestaurant: {},
+            };
+
+            const form = document.getElementById('order-form');
+            const nameInput = document.getElementById('name');
+            const orderInput = document.getElementById('order');
+            const deliveryTimeInput = document.getElementById('delivery-time');
+            const deadlineInput = document.getElementById('order-deadline');
+            const timeError = document.getElementById('time-error');
+            const pickupHiddenInput = document.getElementById('pickup');
+            const pickupBtnGroup = document.querySelector('.pickup-btn-group');
+            const orderListContainer = document.getElementById('order-list-container');
+            const emptyPlaceholder = document.getElementById('empty-list-placeholder');
+            const deadlineDisplay = document.getElementById('deadline-display');
+            const managerSummary = document.getElementById('manager-summary');
+            const overviewContainer = document.getElementById('overview-container');
+
+            const validateField = (field) => {
+                const errorP = field.parentElement.querySelector('.error-message') || field.parentElement.parentElement.querySelector('.error-message');
+                if (!field.value.trim()) {
+                    field.classList.add('border-red-500');
+                    if (errorP) errorP.classList.remove('hidden');
+                    return false;
+                }
+                field.classList.remove('border-red-500');
+                if (errorP) errorP.classList.add('hidden');
+                return true;
+            };
+
+            const validateTime = () => {
+                if (deadlineInput.value && deliveryTimeInput.value && deadlineInput.value > deliveryTimeInput.value) {
+                    timeError.classList.remove('hidden');
+                    deadlineInput.classList.add('border-red-500');
+                    deliveryTimeInput.classList.add('border-red-500');
+                    return false;
+                }
+                timeError.classList.add('hidden');
+                deadlineInput.classList.remove('border-red-500');
+                deliveryTimeInput.classList.remove('border-red-500');
+                return true;
+            };
+
+            const saveState = () => localStorage.setItem('lunchOrderData', JSON.stringify(appState));
+            const loadState = () => {
+                const savedData = localStorage.getItem('lunchOrderData');
+                const today = new Date().toISOString().split('T')[0];
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    if (parsed.date === today) {
+                        appState = parsed;
+                        if (!appState.managersByRestaurant) appState.managersByRestaurant = {};
+                        return;
+                    }
+                }
+                appState = { date: today, orders: [], deadline: '', managersByRestaurant: {} };
+                saveState();
+            };
+
+            const renderApp = () => {
+                appState.orders.sort((a, b) => {
+                    if (a.pickup === 'ja' && b.pickup !== 'ja') return -1;
+                    if (a.pickup !== 'ja' && b.pickup === 'ja') return 1;
+                    return a.name.localeCompare(b.name);
+                });
+
+                orderListContainer.innerHTML = '';
+                emptyPlaceholder.style.display = appState.orders.length === 0 ? 'block' : 'none';
+                
+                appState.orders.forEach(order => {
+                    const isManager = appState.managersByRestaurant[order.restaurant] === order.name;
+                    const canBeManager = !appState.managersByRestaurant[order.restaurant];
+
+                    const card = document.createElement('div');
+                    card.className = `order-card bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm transition-all ${isManager ? 'border-2 border-blue-500 ring-2 ring-blue-200' : ''}`;
+                    
+                    let pickupIcon = order.pickup === 'ja' 
+                        ? `<i class="fas fa-motorcycle text-green-600 fa-lg" title="Holt ab"></i>` 
+                        : `<i class="fas fa-shopping-bag text-gray-400 fa-lg" title="Holt nicht ab"></i>`;
+                    
+                    let managerInfo = '';
+                    if (isManager) {
+                         managerInfo = `<p class="mt-2 text-xs font-semibold text-blue-700">Du managst diese Bestellung!</p>`;
+                    } else if (canBeManager) {
+                        managerInfo = `<button data-action="set-manager" data-name="${order.name}" data-restaurant="${order.restaurant}" class="mt-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200">Ich bestelle das Essen</button>`;
+                    } else if (appState.managersByRestaurant[order.restaurant]) {
+                         managerInfo = `<p class="mt-2 text-xs text-gray-500">Wird von ${appState.managersByRestaurant[order.restaurant]} gemanagt.</p>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start gap-4">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-800">${order.name} <span class="text-sm font-normal text-gray-500">/ ${order.restaurant}</span></h3>
+                                <p class="text-gray-700 my-2 break-all font-semibold">${order.order}</p>
+                                ${order.comment ? `<p class="text-sm text-gray-500 italic break-all"><i class="fas fa-comment-dots mr-1"></i> ${order.comment}</p>` : ''}
+                            </div>
+                            <div class="text-right flex flex-col items-end flex-shrink-0">
+                                ${pickupIcon}
+                                ${managerInfo}
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t text-sm text-gray-600 flex justify-between items-center">
+                            <span><i class="fas fa-door-open mr-1 text-gray-400"></i> Raum: <strong>${order.room}</strong></span>
+                            <span><i class="fas fa-clock mr-1 text-gray-400"></i> Wunsch: <strong>${order.deliveryTime || 'N/A'} Uhr</strong></span>
+                        </div>
+                    `;
+                    orderListContainer.appendChild(card);
+                });
+
+                deadlineDisplay.innerHTML = appState.deadline ? `${appState.deadline} Uhr` : '<span class="text-orange-500">Bitte festlegen</span>';
+                deadlineInput.value = appState.deadline;
+                
+                managerSummary.innerHTML = '';
+                const assignedManagers = Object.keys(appState.managersByRestaurant);
+                if (assignedManagers.length > 0) {
+                     const summaryTitle = document.createElement('h3');
+                     summaryTitle.className = "text-lg font-semibold mb-2 text-gray-800";
+                     summaryTitle.innerHTML = `<i class="fas fa-user-cog text-blue-500 mr-2"></i> Bestell-Manager`;
+                     managerSummary.appendChild(summaryTitle);
+
+                     const list = document.createElement('ul');
+                     list.className = "list-disc list-inside bg-blue-50 p-3 rounded-md text-sm";
+                     assignedManagers.forEach(restaurant => {
+                         const li = document.createElement('li');
+                         li.innerHTML = `<strong>${restaurant}:</strong> ${appState.managersByRestaurant[restaurant]}`;
+                         list.appendChild(li);
+                     });
+                     managerSummary.appendChild(list);
+                }
+            };
+            
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const isNameValid = validateField(nameInput);
+                const isOrderValid = validateField(orderInput);
+                const isTimeValid = validateTime();
+
+                if (!isNameValid || !isOrderValid || !isTimeValid) return;
+
+                const formData = new FormData(form);
+                appState.orders.push({
+                    id: Date.now(),
+                    name: formData.get('name'),
+                    pickup: formData.get('pickup'),
+                    paymentMethod: formData.get('payment-method'),
+                    paypalAddress: formData.get('paypal-address'),
+                    restaurant: formData.get('restaurant'),
+                    order: formData.get('order'),
+                    comment: formData.get('comment'),
+                    deliveryTime: formData.get('delivery-time'),
+                    room: formData.get('room'),
+                });
+                
+                if (deadlineInput.value) appState.deadline = deadlineInput.value;
+                
+                saveState();
+                renderApp();
+                
+                localStorage.setItem('lunchOrderName', formData.get('name'));
+                form.reset();
+                nameInput.value = localStorage.getItem('lunchOrderName') || '';
+
+                const successToast = document.getElementById('success-toast');
+                successToast.style.transform = 'translateX(0)';
+                successToast.style.opacity = '1';
+                setTimeout(() => {
+                    successToast.style.transform = 'translateX(150%)';
+                    successToast.style.opacity = '0';
+                }, 3000);
+                overviewContainer.scrollIntoView({ behavior: 'smooth' });
+            });
+
+            pickupBtnGroup.addEventListener('click', (e) => {
+                const selectedButton = e.target.closest('button');
+                if (!selectedButton) return;
+                
+                const value = selectedButton.dataset.value;
+                pickupHiddenInput.value = value;
+                
+                pickupBtnGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                selectedButton.classList.add('active');
+
+                document.getElementById('payment-section').classList.toggle('hidden', value !== 'ja');
+                 if (value !== 'ja') {
+                    document.getElementById('paypal-section').classList.add('hidden');
+                }
+            });
+            
+            orderListContainer.addEventListener('click', (e) => {
+                const target = e.target.closest('button');
+                if (target && target.dataset.action === 'set-manager') {
+                    const { name, restaurant } = target.dataset;
+                    appState.managersByRestaurant[restaurant] = name;
+                    saveState();
+                    renderApp();
+                }
+            });
+            
+            document.getElementById('reset-button').addEventListener('click', () => document.getElementById('confirm-modal').classList.remove('hidden'));
+            document.getElementById('confirm-cancel').addEventListener('click', () => document.getElementById('confirm-modal').classList.add('hidden'));
+            document.getElementById('confirm-ok').addEventListener('click', () => {
+                appState = { date: new Date().toISOString().split('T')[0], orders: [], deadline: '', managersByRestaurant: {} };
+                saveState();
+                renderApp();
+                document.getElementById('confirm-modal').classList.add('hidden');
+            });
+            
+            document.getElementById('payment-method').addEventListener('change', (e) => {
+                document.getElementById('paypal-section').classList.toggle('hidden', e.target.value !== 'paypal');
+            });
+
+            loadState();
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = today.toLocaleDateString('de-DE', options);
+            nameInput.value = localStorage.getItem('lunchOrderName') || '';
+            renderApp();
+        }
+
+        window.onload = initializeApp;
+    </script>
+</body>
+</html>
